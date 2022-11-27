@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}    
+  Оплатить {{ order }}
+{% endblock %}
+
+{% block content %}
+<article>
+  <div class="card bg-light mb-3">
+    <div class="card-body">
+      <div class="card-header"><h1>{{ order }}</h1></div>
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th scope="col">Наименование</th>
+            <th scope="col">Стоимость</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in order.item.all %}
+          <tr>            
+            <td>{{ item.name }}</td>
+            <td>{{ item.price }}</td>
+          </tr>
+          {% endfor %}
+          <tr>
+            <th scope="row">Всего:</th>
+            <td>{{ price_sum }}</td>
+          </tr>
+          {% if order.discount_amount %}
+          <tr>
+            <th scope="row">Скидка:</th>
+            <td>{{ order.discount_amount }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Сумма скидки:</th>
+            <td>{{ discount_total }}</td>
+          </tr>
+          {% endif %}
+          {% if order.tax_amount %}
+          <tr>
+            <th scope="row">{{ order.tax_amount.tax_name }}</th>
+            <td>{{ order.tax_amount.tax_amount }} %</td>
+          </tr>
+          <tr>
+            <th scope="row">Сумма налога:</th>
+            <td>{{ tax_total }} %</td>
+          </tr>
+          {% endif %}
+          {% if order.discount_amount or order.tax_amount %}
+          <tr>
+            <th scope="row">Итого:</th>
+            <td>{{ total }}</td>
+          </tr>
+          {% endif %}
+      </table>
+      <button id="buy-button">Купить</button>
+
+      <script src="https://js.stripe.com/v3/"></script>
+      <script type="text/javascript">
+        var stripe = Stripe('{{ stripe_publishable_key }}');
+        var buyButton = document.getElementById('buy-button');
+        buyButton.addEventListener('click', function() {
+          fetch('{% url 'payment:order_checkout_session' id=order.id %}', {method: 'GET'})
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (session) {
+            return stripe.redirectToCheckout({ sessionId: session.sessionId });
+          })
+        });
+      </script>
+    </div>
+  </div>
+</article>
+{% endblock %} 

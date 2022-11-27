@@ -10,16 +10,15 @@
     <div class="card-body">
       <h1>{{ item.name }}</h1>
       <p>{{ item.description }}</p>
-      <p>{{ item.price }}</p>
-      <p>{{ stripe_publishable_key }}</p>
-      <button id="buy-button">Buy</button>
+      <p>Стоимость: {{ item.price }}</p>
+      <button id="buy-button">Купить</button>
 
       <script src="https://js.stripe.com/v3/"></script>
       <script type="text/javascript">
         var stripe = Stripe('{{ stripe_publishable_key }}');
         var buyButton = document.getElementById('buy-button');
         buyButton.addEventListener('click', function() {
-          fetch('{% url 'payment:checkout_session' id=item.id %}', {method: 'GET'})
+          fetch('{% url 'payment:item_checkout_session' id=item.id %}', {method: 'GET'})
           .then(function (response) {
             return response.json();
           })

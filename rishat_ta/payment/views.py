@@ -1,11 +1,44 @@
 from django.shortcuts import render, get_object_or_404
-from .models import Item
+from .models import Item, Order
 import stripe
 from django.conf import settings
 from django.http.response import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
 from django.urls import reverse
+from django.db.models import Sum
+
+
+def order(request, order_id):
+    order = get_object_or_404(Order, pk=order_id)
+    price_sum = order.item.aggregate(Sum('price'))['price__sum']
+    discount_total = 0
+    tax_total = 0
+    if order.discount_amount:
+        discount_total = (
+            round((price_sum * order.discount_amount.discount_amount / 100), 2)
+        )
+    if order.tax_amount:
+        tax_total = (
+            round(
+                ((price_sum - discount_total)
+                * order.tax_amount.tax_amount / 100), 2
+            )
+        )
+    total = round((price_sum - discount_total + tax_total), 2)
+
+    return render(
+        request,
+        'payment/order.html',
+        {
+            'order': order,
+            'price_sum': round(price_sum, 2),
+            'discount_total': discount_total,
+            'tax_total': tax_total,
+            'total': total,
+            'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY
+        }
+    )
 
 
 def item(request, item_id):
@@ -13,7 +46,7 @@ def item(request, item_id):
 
     return render(
         request,
-        'payment/index.html',
+        'payment/item.html',
         {
             'item': item,
             'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY
@@ -22,8 +55,62 @@ def item(request, item_id):
 
 
 @csrf_exempt
-def create_checkout_session(request, id):
-    product = get_object_or_404(Item, pk=id)
+def item_checkout_session(request, id):
+    item = get_object_or_404(Item, pk=id)
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+
+    checkout_session = stripe.checkout.Session.create(
+        payment_method_types=['card'],
+        line_items=[
+            {
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {'name': item.name},
+                    'unit_amount': int(item.price * 100),
+                },
+                'quantity': 1,
+            }
+        ],
+        mode='payment',
+        success_url=request.build_absolute_uri(reverse('payment:success')),
+        cancel_url=request.build_absolute_uri(reverse('payment:failed')),
+    )
+
+    return JsonResponse({'sessionId': checkout_session.id})
+
+
+def coupon_create(order):
+    if order.discount_amount:
+        try:
+            stripe.Coupon.create(
+                id=order.discount_amount.pk,
+                percent_off=order.discount_amount.discount_amount,
+                duration='forever'
+            )
+        except Exception:
+            pass
+        coupon = {'coupon': order.discount_amount.pk, }
+    else:
+        coupon = {}
+    return coupon
+
+
+def tax_create(order):
+    tax_rate_id = []
+    if order.tax_amount:
+        tax_rate = stripe.TaxRate.create(
+            display_name=order.tax_amount.tax_name,
+            inclusive=False,
+            percentage=order.tax_amount.tax_amount
+        )
+        tax_rate_id = [tax_rate['id']]
+    return tax_rate_id
+
+
+@csrf_exempt
+def order_checkout_session(request, id):
+    order = get_object_or_404(Order, pk=id)
+    price_sum = order.item.aggregate(Sum('price'))
     stripe.api_key = settings.STRIPE_SECRET_KEY
     checkout_session = stripe.checkout.Session.create(
         payment_method_types=['card'],
@@ -31,13 +118,17 @@ def create_checkout_session(request, id):
             {
                 'price_data': {
                     'currency': 'usd',
-                    'product_data': {'name': product.name},
-                    'unit_amount': int(product.price * 100),
+                    'product_data': {'name': order},
+                    'unit_amount': (
+                        int(round(price_sum['price__sum'], 2) * 100)
+                    ),
                 },
                 'quantity': 1,
+                'tax_rates': tax_create(order),
             }
         ],
         mode='payment',
+        discounts=[coupon_create(order)],
         success_url=request.build_absolute_uri(reverse('payment:success')),
         cancel_url=request.build_absolute_uri(reverse('payment:failed')),
     )

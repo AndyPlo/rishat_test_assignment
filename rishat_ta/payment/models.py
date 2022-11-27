@@ -1,9 +1,10 @@
 from django.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 
 class Item(models.Model):
     name = models.CharField(
-        'Наименование',
+        'Наименование предмета',
         max_length=200
     )
     description = models.TextField(
@@ -17,3 +18,74 @@ class Item(models.Model):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        verbose_name = 'Предмет'
+        verbose_name_plural = 'Предметы'
+
+
+class Tax(models.Model):
+    tax_name = models.CharField(
+        'Тип налога',
+        max_length=50
+    )
+    tax_amount = models.DecimalField(
+        'Налог',
+        max_digits=5,
+        decimal_places=2,
+        validators=[MinValueValidator(0), MaxValueValidator(100)]
+    )
+
+    def __str__(self):
+        return f'{self.tax_name}: {self.tax_amount} %'
+
+    class Meta:
+        verbose_name = 'Налог'
+        verbose_name_plural = 'Налоги'
+
+
+class Discount(models.Model):
+    discount_amount = models.DecimalField(
+        'Скидка',
+        max_digits=5,
+        decimal_places=2,
+        validators=[MinValueValidator(0), MaxValueValidator(100)]
+    )
+
+    def __str__(self):
+        return f'{self.discount_amount} %'
+
+    class Meta:
+        verbose_name = 'Скидка'
+        verbose_name_plural = 'Скидки'
+
+
+class Order(models.Model):
+    item = models.ManyToManyField(
+        Item,
+        verbose_name='Наименование предмета'
+    )
+    discount_amount = models.ForeignKey(
+        Discount,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name='discounts',
+        verbose_name='Скидки'
+
+    )
+    tax_amount = models.ForeignKey(
+        Tax,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name='taxes',
+        verbose_name='Налог'
+    )
+
+    def __str__(self):
+        return f'Заказ №{self.pk}'
+
+    class Meta:
+        verbose_name = 'Заказ'
+        verbose_name_plural = 'Заказы'
