@@ -2,7 +2,6 @@ import stripe
 from django.conf import settings
 from django.http.response import JsonResponse
 from django.shortcuts import get_object_or_404, render
-from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
 
@@ -42,8 +41,8 @@ def item_checkout_session(request, id):
             }
         ],
         mode='payment',
-        success_url=request.build_absolute_uri(reverse('item_app:success')),
-        cancel_url=request.build_absolute_uri(reverse('item_app:failed')),
+        success_url='http://localhost/success/',
+        cancel_url='http://localhost/failed/',
     )
 
     return JsonResponse({'sessionId': checkout_session.id})
