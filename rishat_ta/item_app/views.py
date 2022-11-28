@@ -143,8 +143,8 @@ def order_checkout_session(request, id):
         ],
         mode='payment',
         discounts=[coupon_get_or_create(order)],
-        success_url=request.build_absolute_uri(reverse('item_app:success')),
-        cancel_url=request.build_absolute_uri(reverse('item_app:failed')),
+        success_url='http://localhost/success/',
+        cancel_url='http://localhost/failed/',
     )
 
     return JsonResponse({'sessionId': checkout_session.id})
