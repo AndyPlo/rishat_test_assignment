@@ -1,5 +1,5 @@
-from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
 
 
 class Item(models.Model):
@@ -35,6 +35,13 @@ class Tax(models.Model):
         decimal_places=2,
         validators=[MinValueValidator(0), MaxValueValidator(100)]
     )
+    stripe_tax_rate_id = models.SlugField(
+        'Stripe_tax_rate_ID',
+        max_length=200,
+        unique=True,
+        blank=True,
+        null=True,
+    )
 
     def __str__(self):
         return f'{self.tax_name}: {self.tax_amount} %'
@@ -45,6 +52,10 @@ class Tax(models.Model):
 
 
 class Discount(models.Model):
+    discount_name = models.CharField(
+        'Тип скидки',
+        max_length=50
+    )
     discount_amount = models.DecimalField(
         'Скидка',
         max_digits=5,
@@ -53,7 +64,7 @@ class Discount(models.Model):
     )
 
     def __str__(self):
-        return f'{self.discount_amount} %'
+        return f'{self.discount_name}: {self.discount_amount} %'
 
     class Meta:
         verbose_name = 'Скидка'
@@ -63,7 +74,7 @@ class Discount(models.Model):
 class Order(models.Model):
     item = models.ManyToManyField(
         Item,
-        through='Item_order',
+        through='Order_items',
         verbose_name='Наименование предмета'
     )
     discount_amount = models.ForeignKey(
@@ -92,7 +103,7 @@ class Order(models.Model):
         verbose_name_plural = 'Заказы'
 
 
-class Item_order(models.Model):
+class Order_items(models.Model):
     order = models.ForeignKey(
         Order,
         on_delete=models.CASCADE,
@@ -111,3 +122,7 @@ class Item_order(models.Model):
 
     def __str__(self):
         return f'{self.order} - {self.item}'
+
+    class Meta:
+        verbose_name = 'Предметы в заказе'
+        verbose_name_plural = 'Предметы в заказах'

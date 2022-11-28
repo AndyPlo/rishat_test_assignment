@@ -78,7 +78,7 @@
         var stripe = Stripe('{{ stripe_publishable_key }}');
         var buyButton = document.getElementById('buy-button');
         buyButton.addEventListener('click', function() {
-          fetch('{% url 'payment:order_checkout_session' id=order.id %}', {method: 'GET'})
+          fetch('{% url 'item_app:order_checkout_session' id=order.id %}', {method: 'GET'})
           .then(function (response) {
             return response.json();
           })

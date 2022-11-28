@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}    
-  Купить {{ item.name }}
+  Оплатить {{ item.name }}
 {% endblock %}
 
 {% block content %}
@@ -18,7 +18,7 @@
         var stripe = Stripe('{{ stripe_publishable_key }}');
         var buyButton = document.getElementById('buy-button');
         buyButton.addEventListener('click', function() {
-          fetch('{% url 'payment:item_checkout_session' id=item.id %}', {method: 'GET'})
+          fetch('{% url 'item_app:item_checkout_session' id=item.id %}', {method: 'GET'})
           .then(function (response) {
             return response.json();
           })
