@@ -1,19 +1,18 @@
 from django.shortcuts import render, get_object_or_404
-from .models import Item, Order
+from .models import Item, Order, Item_order
 import stripe
 from django.conf import settings
 from django.http.response import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
 from django.urls import reverse
-from django.db.models import Sum
 
 
 def order(request, order_id):
     order = get_object_or_404(Order, pk=order_id)
-    price_sum = order.item.aggregate(Sum('price'))['price__sum']
-    discount_total = 0
-    tax_total = 0
+    items = Item_order.objects.filter(order=order)
+    price_sum = sum([item.item_amount * item.item.price for item in items])
+    discount_total, tax_total = 0, 0
     if order.discount_amount:
         discount_total = (
             round((price_sum * order.discount_amount.discount_amount / 100), 2)
@@ -22,7 +21,7 @@ def order(request, order_id):
         tax_total = (
             round(
                 ((price_sum - discount_total)
-                * order.tax_amount.tax_amount / 100), 2
+                 * order.tax_amount.tax_amount / 100), 2
             )
         )
     total = round((price_sum - discount_total + tax_total), 2)
@@ -31,8 +30,9 @@ def order(request, order_id):
         request,
         'payment/order.html',
         {
+            'items': items,
             'order': order,
-            'price_sum': round(price_sum, 2),
+            'price_sum': price_sum,
             'discount_total': discount_total,
             'tax_total': tax_total,
             'total': total,
@@ -110,7 +110,8 @@ def tax_create(order):
 @csrf_exempt
 def order_checkout_session(request, id):
     order = get_object_or_404(Order, pk=id)
-    price_sum = order.item.aggregate(Sum('price'))
+    items = Item_order.objects.filter(order=order)
+    price_sum = sum([item.item_amount * item.item.price for item in items])
     stripe.api_key = settings.STRIPE_SECRET_KEY
     checkout_session = stripe.checkout.Session.create(
         payment_method_types=['card'],
@@ -120,7 +121,7 @@ def order_checkout_session(request, id):
                     'currency': 'usd',
                     'product_data': {'name': order},
                     'unit_amount': (
-                        int(round(price_sum['price__sum'], 2) * 100)
+                        int(price_sum * 100)
                     ),
                 },
                 'quantity': 1,

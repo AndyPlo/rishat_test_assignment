@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Item, Discount, Order, Tax
+from .models import Item, Discount, Order, Tax, Item_order
 
 
 @admin.register(Item)
@@ -13,10 +13,16 @@ class DiscountAdmin(admin.ModelAdmin):
 
 
 @admin.register(Order)
-class ItemAdmin(admin.ModelAdmin):
+class OrderAdmin(admin.ModelAdmin):
     list_display = ('pk', 'discount_amount', 'tax_amount')
 
 
 @admin.register(Tax)
 class TaxAdmin(admin.ModelAdmin):
     list_display = ('pk', 'tax_name', 'tax_amount')
+
+
+@admin.register(Item_order)
+class ItemOrderAdmin(admin.ModelAdmin):
+    list_display = ('order', 'item', 'item_amount')
+    list_editable = ('item',)

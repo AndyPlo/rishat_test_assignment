@@ -5,7 +5,6 @@
 {% endblock %}
 
 {% block content %}
-{% load user_filters %}
 <article>
   <div class="card bg-light mb-3">
     <div class="card-body">
@@ -14,60 +13,44 @@
         <thead>
           <tr>
             <th scope="col">Наименование</th>
-            <th scope="col">Количество</th>
-            <th scope="col">Цена</th>
             <th scope="col">Стоимость</th>
           </tr>
         </thead>
         <tbody>
-          {% for item in items %}
+          {% for item in order.item.all %}
           <tr>            
-            <td>{{ item.item.name }}</td>
-            <td>{{ item.item_amount }}</td>
-            <td>{{ item.item.price }} USD</td>
-            <td>{{ item.item_amount | multiply:item.item.price }} USD</td>
+            <td>{{ item.name }}</td>
+            <td>{{ item.price }}</td>
           </tr>
           {% endfor %}
           <tr>
-            <td></td>
-            <td></td>
             <th scope="row">Всего:</th>
-            <td>{{ price_sum }} USD</td>
+            <td>{{ price_sum }}</td>
           </tr>
           {% if order.discount_amount %}
           <tr>
-            <td></td>
-            <td></td>
             <th scope="row">Скидка:</th>
             <td>{{ order.discount_amount }}</td>
           </tr>
           <tr>
-            <td></td>
-            <td></td>
             <th scope="row">Сумма скидки:</th>
-            <td>{{ discount_total }} USD</td>
+            <td>{{ discount_total }}</td>
           </tr>
           {% endif %}
           {% if order.tax_amount %}
           <tr>
-            <td></td>
-            <td></td>
             <th scope="row">{{ order.tax_amount.tax_name }}</th>
             <td>{{ order.tax_amount.tax_amount }} %</td>
           </tr>
           <tr>
-            <td></td>
-            <td></td>
             <th scope="row">Сумма налога:</th>
-            <td>{{ tax_total }} USD</td>
+            <td>{{ tax_total }} %</td>
           </tr>
           {% endif %}
           {% if order.discount_amount or order.tax_amount %}
           <tr>
-            <td></td>
-            <td></td>
             <th scope="row">Итого:</th>
-            <td>{{ total }} USD</td>
+            <td>{{ total }}</td>
           </tr>
           {% endif %}
       </table>

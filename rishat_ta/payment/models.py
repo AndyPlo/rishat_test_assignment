@@ -63,6 +63,7 @@ class Discount(models.Model):
 class Order(models.Model):
     item = models.ManyToManyField(
         Item,
+        through='Item_order',
         verbose_name='Наименование предмета'
     )
     discount_amount = models.ForeignKey(
@@ -89,3 +90,24 @@ class Order(models.Model):
     class Meta:
         verbose_name = 'Заказ'
         verbose_name_plural = 'Заказы'
+
+
+class Item_order(models.Model):
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name='orders',
+        verbose_name='Заказ'
+    )
+    item = models.ForeignKey(
+        Item,
+        on_delete=models.CASCADE,
+        related_name='items',
+        verbose_name='Предметы'
+    )
+    item_amount = models.IntegerField(
+        'Количество предметов'
+    )
+
+    def __str__(self):
+        return f'{self.order} - {self.item}'
