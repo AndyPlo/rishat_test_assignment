@@ -3,7 +3,7 @@
 
 Ссылка на задание: [Тестовое задания для Python разработчика](https://docs.google.com/document/d/1RqJhk-pRDuAk4pH1uqbY9-8uwAqEXB9eRQWLSMM_9sI/edit?usp=sharing)
 
-Результат опубликован на [paythonanywere.com](http://andyplo.pythonanywhere.com/order/1/)
+Тестовый сервер на [paythonanywere.com](http://andyplo.pythonanywhere.com/order/1/)
 Для быстрой проверки:
 
 - доступ в Django Admin панель: пользователь admin, пароль admin;
@@ -35,6 +35,7 @@
  5. Реализован просмотр и заполнение моделей в Django Admin панели.
  6. Использованы environment variables.
  7. Реализован запуск через Docker.
+ 8. Приложение запущено на тестовом сервере.
 
 ## Установка и запуск docker-compose
 
