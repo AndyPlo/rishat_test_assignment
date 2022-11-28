@@ -52,6 +52,8 @@
 6. Соберите статику `docker-compose exec web python manage.py collectstatic --no-input`
 
 7. Заполните базу `docker-compose exec web python manage.py loaddata db.json`
+
+8. Ссылка для теста <http://localhost/order/1/>
   
 ## Автор
 
